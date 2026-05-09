@@ -481,12 +481,13 @@
             };
 
             // 1. ส่งข้อมูลไปจัดเก็บที่ Google Sheets
-            if (GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+            if (GOOGLE_SCRIPT_URL !== "https://script.google.com/macros/s/AKfycbxfeleErg94uFjXaSN_eU-Pw_Z7zoflmqzEIgCaqyqfzB1s072U9G3aukXNKlBAM1z8/exec") {
                 try {
+                    // ใช้ mode: 'no-cors' บังคับไม่ให้เบราว์เซอร์ทำการบล็อกเมื่อส่งข้อมูลข้ามโดเมน
                     await fetch(GOOGLE_SCRIPT_URL, {
                         method: 'POST',
-                        // ใช้ text/plain เพื่อเลี่ยงปัญหา CORS Preflight
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                        mode: 'no-cors', 
+                        headers: { 'Content-Type': 'application/json' }, 
                         body: JSON.stringify(newRecord)
                     });
                 } catch (error) {
@@ -519,7 +520,7 @@
 
         // ฟังก์ชันดึงข้อมูลจาก Google Sheets แบบใหม่ (มีการตรวจจับ Error ที่แม่นยำขึ้น)
         async function loadDataFromGoogleSheet() {
-            if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+            if (GOOGLE_SCRIPT_URL === "https://script.google.com/macros/s/AKfycbxfeleErg94uFjXaSN_eU-Pw_Z7zoflmqzEIgCaqyqfzB1s072U9G3aukXNKlBAM1z8/exec") {
                 console.log("ใช้งานแบบ Offline (ไม่มี URL Google Sheets)");
                 return;
             }
