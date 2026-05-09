@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกการปฏิบัติงานห้องเรียนสีขาว</title>
+    
+    <!-- โหลด Tailwind CSS สำหรับจัดการ UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลด Font Sarabun สำหรับความเป็นทางการ -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- โหลด html2pdf.js สำหรับแปลงหน้าเว็บเป็น PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- โหลด Flatpickr สำหรับ Datepicker รูปแบบ dd/mm/yyyy -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/th.js"></script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* กำหนดขนาดเนื้อหาให้ใกล้เคียง A4 */
+        .a4-container {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20mm; /* ขอบกระดาษ */
+        }
+        /* สไตล์ตารางรายงาน */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid #374151;
+            padding: 8px;
+            font-size: 14px;
+        }
+        .report-table th {
+            background-color: #f3f4f6;
+            text-align: center;
+        }
+        /* ซ่อนส่วนที่ไม่อยากให้พิมพ์ */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .a4-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+        }
+        
+        .tab-btn.active {
+            border-bottom: 4px solid #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm sticky top-0 z-10 no-print">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <img src="https://img1.pic.in.th/images/ff2d813bfffa28858c2728ce2150bb28.png" alt="Logo" class="h-10 w-10 object-contain">
+                    <span class="font-bold text-xl text-blue-800">ระบบห้องเรียนสีขาว</span>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="switchTab('entry')" id="btn-tab-entry" class="tab-btn active px-3 py-4 text-gray-600 hover:text-blue-600 focus:outline-none transition-colors">
+                        📝 บันทึกปฏิบัติงาน
+                    </button>
+                    <button onclick="switchTab('report')" id="btn-tab-report" class="tab-btn px-3 py-4 text-gray-600 hover:text-blue-600 focus:outline-none transition-colors">
+                        📊 พิมพ์รายงานสรุป
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ส่วนเนื้อหาหลัก -->
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+
+        <!-- ================= TAB 1: ฟอร์มบันทึกข้อมูล ================= -->
+        <div id="tab-entry" class="bg-white rounded-xl shadow-md p-6 md:p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">แบบฟอร์มบันทึกการปฏิบัติงาน</h2>
+            
+            <form id="entryForm" onsubmit="saveRecord(event)">
+                <!-- ส่วนที่ 1: ข้อมูลห้องเรียน -->
+                <h3 class="text-lg font-semibold text-blue-700 mb-4 bg-blue-50 p-2 rounded">1. ข้อมูลทั่วไป</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ระดับชั้น <span class="text-red-500">*</span></label>
+                        <select id="entryClass" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">เลือกชั้น...</option>
+                            <option value="มัธยมศึกษาปีที่ 1">มัธยมศึกษาปีที่ 1</option>
+                            <option value="มัธยมศึกษาปีที่ 2">มัธยมศึกษาปีที่ 2</option>
+                            <option value="มัธยมศึกษาปีที่ 3">มัธยมศึกษาปีที่ 3</option>
+                            <option value="มัธยมศึกษาปีที่ 4">มัธยมศึกษาปีที่ 4</option>
+                            <option value="มัธยมศึกษาปีที่ 5">มัธยมศึกษาปีที่ 5</option>
+                            <option value="มัธยมศึกษาปีที่ 6">มัธยมศึกษาปีที่ 6</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ห้อง <span class="text-red-500">*</span></label>
+                        <select id="entryRoom" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">เลือกห้อง...</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ภาคเรียน/ปีการศึกษา <span class="text-red-500">*</span></label>
+                        <input type="text" id="entryTerm" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เช่น 1/2569">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ประจำเดือน <span class="text-red-500">*</span></label>
+                        <select id="entryMonth" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">เลือกเดือน...</option>
+                            <option value="มกราคม">มกราคม</option>
+                            <option value="กุมภาพันธ์">กุมภาพันธ์</option>
+                            <option value="มีนาคม">มีนาคม</option>
+                            <option value="เมษายน">เมษายน</option>
+                            <option value="พฤษภาคม">พฤษภาคม</option>
+                            <option value="มิถุนายน">มิถุนายน</option>
+                            <option value="กรกฎาคม">กรกฎาคม</option>
+                            <option value="สิงหาคม">สิงหาคม</option>
+                            <option value="กันยายน">กันยายน</option>
+                            <option value="ตุลาคม">ตุลาคม</option>
+                            <option value="พฤศจิกายน">พฤศจิกายน</option>
+                            <option value="ธันวาคม">ธันวาคม</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ส่วนที่ 2: ข้อมูลการปฏิบัติงาน -->
+                <h3 class="text-lg font-semibold text-green-700 mb-4 bg-green-50 p-2 rounded">2. ข้อมูลการปฏิบัติงาน</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ฝ่ายรับผิดชอบ <span class="text-red-500">*</span></label>
+                        <select id="entryDept" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
+                            <option value="">-- กรุณาเลือกฝ่าย --</option>
+                            <option value="ฝ่ายการเรียน">1. ฝ่ายการเรียน</option>
+                            <option value="ฝ่ายการงาน">2. ฝ่ายการงาน</option>
+                            <option value="ฝ่ายสารวัตรนักเรียน">3. ฝ่ายสารวัตรนักเรียน</option>
+                            <option value="ฝ่ายกิจกรรม">4. ฝ่ายกิจกรรม</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">วันที่ปฏิบัติงาน <span class="text-red-500">*</span></label>
+                        <input type="text" id="entryDate" required class="datepicker w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white" placeholder="เลือกวันที่">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่องาน/กิจกรรม <span class="text-red-500">*</span></label>
+                        <input type="text" id="entryActivity" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="เช่น ตรวจเวรทำความสะอาด, จัดบอร์ดความรู้">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">รายละเอียดการปฏิบัติงาน <span class="text-red-500">*</span></label>
+                        <textarea id="entryDetail" required rows="3" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none resize-none" placeholder="ระบุรายละเอียดสิ่งที่ได้ดำเนินการ..."></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ผลที่ได้ / ปัญหาที่พบ <span class="text-red-500">*</span></label>
+                        <textarea id="entryResult" required rows="2" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none resize-none" placeholder="ระบุผลลัพธ์ หรือปัญหาอุปสรรคที่พบเจอ..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ผู้บันทึก <span class="text-red-500">*</span></label>
+                        <input type="text" id="entryRecorder" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="ชื่อ-นามสกุล ผู้บันทึกข้อมูล">
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4 border-t border-gray-200">
+                    <button type="button" onclick="document.getElementById('entryForm').reset()" class="mr-3 px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        ล้างข้อมูล
+                    </button>
+                    <button type="submit" id="submitBtn" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        บันทึกข้อมูล
+                    </button>
+                </div>
+            </form>
+            
+            <!-- แจ้งเตือนความสำเร็จ -->
+            <div id="successMsg" class="hidden mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                <strong class="font-bold">สำเร็จ!</strong>
+                <span class="block sm:inline"> บันทึกข้อมูลเข้าระบบเรียบร้อยแล้ว</span>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: รายงานและพิมพ์ PDF ================= -->
+        <div id="tab-report" class="hidden space-y-6">
+            
+            <!-- แผงควบคุมการออกรายงาน (ไม่ปรากฏใน PDF) -->
+            <div class="bg-white rounded-xl shadow-md p-6 no-print">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ตั้งค่าการพิมพ์รายงานสรุปประจำเดือน</h2>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ภาคเรียน/ปีการศึกษา</label>
+                        <input type="text" id="filterTerm" class="w-full p-2 border border-gray-300 rounded bg-gray-50" placeholder="เช่น 1/2569" onkeyup="generatePreview()" onchange="generatePreview()">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">เลือกระดับชั้น</label>
+                        <select id="filterClass" class="w-full p-2 border border-gray-300 rounded bg-gray-50" onchange="generatePreview()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="มัธยมศึกษาปีที่ 1">มัธยมศึกษาปีที่ 1</option>
+                            <option value="มัธยมศึกษาปีที่ 2">มัธยมศึกษาปีที่ 2</option>
+                            <option value="มัธยมศึกษาปีที่ 3">มัธยมศึกษาปีที่ 3</option>
+                            <option value="มัธยมศึกษาปีที่ 4">มัธยมศึกษาปีที่ 4</option>
+                            <option value="มัธยมศึกษาปีที่ 5">มัธยมศึกษาปีที่ 5</option>
+                            <option value="มัธยมศึกษาปีที่ 6">มัธยมศึกษาปีที่ 6</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">เลือกห้อง</label>
+                        <select id="filterRoom" class="w-full p-2 border border-gray-300 rounded bg-gray-50" onchange="generatePreview()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">เลือกเดือน</label>
+                        <select id="filterMonth" class="w-full p-2 border border-gray-300 rounded bg-gray-50" onchange="generatePreview()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="มกราคม">มกราคม</option>
+                            <option value="กุมภาพันธ์">กุมภาพันธ์</option>
+                            <option value="มีนาคม">มีนาคม</option>
+                            <option value="เมษายน">เมษายน</option>
+                            <option value="พฤษภาคม">พฤษภาคม</option>
+                            <option value="มิถุนายน">มิถุนายน</option>
+                            <option value="กรกฎาคม">กรกฎาคม</option>
+                            <option value="สิงหาคม">สิงหาคม</option>
+                            <option value="กันยายน">กันยายน</option>
+                            <option value="ตุลาคม">ตุลาคม</option>
+                            <option value="พฤศจิกายน">พฤศจิกายน</option>
+                            <option value="ธันวาคม">ธันวาคม</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">เลือกฝ่าย</label>
+                        <select id="filterDept" class="w-full p-2 border border-gray-300 rounded bg-gray-50" onchange="generatePreview()">
+                            <option value="ฝ่ายการเรียน">ฝ่ายการเรียน</option>
+                            <option value="ฝ่ายการงาน">ฝ่ายการงาน</option>
+                            <option value="ฝ่ายสารวัตรนักเรียน">ฝ่ายสารวัตรนักเรียน</option>
+                            <option value="ฝ่ายกิจกรรม">ฝ่ายกิจกรรม</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-yellow-50 p-4 rounded border border-yellow-200">
+                    <div>
+                        <label class="block text-sm text-gray-700 font-semibold mb-1">ชื่อหัวหน้าชั้น / หัวหน้าแผนก (เพื่อพิมพ์ในใบรายงาน)</label>
+                        <input type="text" id="printLeaderName" class="w-full p-2 border border-gray-300 rounded outline-none" placeholder="พิมพ์ชื่อ-นามสกุล หัวหน้าชั้น" onkeyup="updateSignatures()">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-700 font-semibold mb-1">ชื่อครูประจำชั้น / ครูที่ปรึกษา (เพื่อพิมพ์ในใบรายงาน)</label>
+                        <input type="text" id="printTeacherName" class="w-full p-2 border border-gray-300 rounded outline-none" placeholder="พิมพ์ชื่อ-นามสกุล ครูประจำชั้น" onkeyup="updateSignatures()">
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">* ข้อมูลจะถูกดึงจากที่คุณบันทึกไว้ในแท็บแรก</p>
+                    <button onclick="exportToPDF()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-md flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        พิมพ์รายงาน / บันทึก PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- หน้ากระดาษพรีวิว (ส่วนที่จะถูกแปลงเป็น PDF) -->
+            <div id="pdf-report-container" class="a4-container">
+                <!-- Header -->
+                <div class="text-center mb-6 text-gray-900">
+                    <div class="mx-auto w-24 h-24 flex items-center justify-center mb-2">
+                        <img src="https://img1.pic.in.th/images/ff2d813bfffa28858c2728ce2150bb28.png" alt="โลโก้โรงเรียนหนองตาคงพิทยาคาร" class="max-w-full max-h-full object-contain">
+                    </div>
+                    <h1 class="text-xl font-bold mb-1">รายงานสรุปการปฏิบัติงาน</h1>
+                    <h2 class="text-lg font-bold mb-1">โครงการสถานศึกษาสีขาว ปลอดยาเสพติดและอบายมุข</h2>
+                    <h2 class="text-lg font-bold mb-4">โรงเรียนหนองตาคงพิทยาคาร</h2>
+                    <h3 class="text-md font-medium mb-1">
+                        สรุปการปฏิบัติงาน <span id="r-dept" class="text-blue-800">ฝ่าย...</span> 
+                        ภาคเรียนที่ <span id="r-term" class="text-blue-800">...</span>
+                    </h3>
+                    <h3 class="text-md font-medium">
+                        ประจำเดือน <span id="r-month" class="text-blue-800">...</span> 
+                        ชั้น <span id="r-class" class="text-blue-800">...</span>/<span id="r-room" class="text-blue-800">...</span>
+                    </h3>
+                </div>
+
+                <!-- Table Content -->
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">ที่</th>
+                            <th width="12%">ว/ด/ป</th>
+                            <th width="20%">ชื่องาน/กิจกรรม</th>
+                            <th width="30%">รายละเอียดการปฏิบัติงาน</th>
+                            <th width="20%">ผลที่ได้/ปัญหาที่พบ</th>
+                            <th width="13%">ผู้บันทึก</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        <!-- ข้อมูลจะถูกเติมด้วย JavaScript -->
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-gray-500">กรุณาเลือกเงื่อนไขเพื่อแสดงข้อมูล</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Signatures -->
+                <div class="mt-16 pt-4 grid grid-cols-2 gap-8 text-sm">
+                    <div class="text-center">
+                        <p class="mb-6 text-gray-800">ตรวจสอบแล้วถูกต้อง</p>
+                        <div class="flex justify-center items-end mb-2">
+                            <span class="mr-2">(ลงชื่อ)</span>
+                            <span class="inline-block border-b border-dotted border-gray-600 w-40"></span>
+                        </div>
+                        <div class="flex justify-center items-end mb-1">
+                            <span class="mr-2">(</span>
+                            <span id="sigLeaderName" class="inline-block border-b border-dotted border-gray-600 w-40 text-center text-blue-800">.................................</span>
+                            <span class="ml-2">)</span>
+                        </div>
+                        <p class="text-gray-800 mt-1">หัวหน้าชั้น/หัวหน้าแผนก</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="mb-6 text-gray-800">ตรวจสอบแล้วถูกต้อง</p>
+                        <div class="flex justify-center items-end mb-2">
+                            <span class="mr-2">(ลงชื่อ)</span>
+                            <span class="inline-block border-b border-dotted border-gray-600 w-40"></span>
+                        </div>
+                        <div class="flex justify-center items-end mb-1">
+                            <span class="mr-2">(</span>
+                            <span id="sigTeacherName" class="inline-block border-b border-dotted border-gray-600 w-40 text-center text-blue-800">.................................</span>
+                            <span class="ml-2">)</span>
+                        </div>
+                        <p class="text-gray-800 mt-1">ครูประจำชั้น/ครูที่ปรึกษา</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // เริ่มต้นใช้งาน Datepicker
+        flatpickr(".datepicker", {
+            dateFormat: "d/m/Y",
+            locale: "th",
+            allowInput: true
+        });
+
+        // ==========================================
+        // URL ของ Google Apps Script (นำ URL จากการ Deploy มาวางที่นี่)
+        // ==========================================
+        const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+        // อาเรย์สำหรับเก็บข้อมูล
+        let records = JSON.parse(localStorage.getItem('whiteRoomRecords')) || [];
+
+        // ฟังก์ชันสลับหน้า Tab
+        async function switchTab(tabName) {
+            document.getElementById('tab-entry').classList.add('hidden');
+            document.getElementById('tab-report').classList.add('hidden');
+            document.getElementById('btn-tab-entry').classList.remove('active');
+            document.getElementById('btn-tab-report').classList.remove('active');
+
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.getElementById('btn-tab-' + tabName).classList.add('active');
+
+            if (tabName === 'report') {
+                await loadDataFromGoogleSheet(); // โหลดข้อมูลใหม่จากฐานข้อมูล
+                generatePreview(); 
+            }
+        }
+
+        // ฟังก์ชันบันทึกข้อมูลแบบฟอร์ม
+        async function saveRecord(event) {
+            event.preventDefault(); // ป้องกันการรีเฟรชหน้า
+
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // เปลี่ยนสถานะปุ่มขณะกำลังโหลด
+            submitBtn.innerHTML = '⏳ กำลังบันทึก...';
+            submitBtn.disabled = true;
+
+            // สร้างอ็อบเจ็กต์ข้อมูล
+            const newRecord = {
+                id: Date.now(),
+                classLvl: document.getElementById('entryClass').value,
+                room: document.getElementById('entryRoom').value,
+                term: document.getElementById('entryTerm').value,
+                month: document.getElementById('entryMonth').value,
+                dept: document.getElementById('entryDept').value,
+                date: document.getElementById('entryDate').value,
+                activity: document.getElementById('entryActivity').value,
+                detail: document.getElementById('entryDetail').value,
+                result: document.getElementById('entryResult').value,
+                recorder: document.getElementById('entryRecorder').value,
+                timestamp: new Date().toLocaleString('th-TH')
+            };
+
+            // 1. ส่งข้อมูลไปจัดเก็บที่ Google Sheets
+            if (GOOGLE_SCRIPT_URL !== "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        // ใช้ text/plain เพื่อเลี่ยงปัญหา CORS Preflight
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                        body: JSON.stringify(newRecord)
+                    });
+                } catch (error) {
+                    console.error("เกิดข้อผิดพลาดในการบันทึกลง Google Sheets:", error);
+                }
+            } else {
+                console.warn("ยังไม่ได้ตั้งค่าลิงก์ Google Sheets ข้อมูลจะถูกเก็บแค่ในเบราว์เซอร์ชั่วคราว");
+            }
+
+            // 2. บันทึกลง LocalStorage เผื่อสำรอง
+            records.push(newRecord);
+            localStorage.setItem('whiteRoomRecords', JSON.stringify(records));
+
+            // เคลียร์เฉพาะฟิลด์รายละเอียดการทำงาน
+            document.getElementById('entryDate').value = '';
+            document.getElementById('entryActivity').value = '';
+            document.getElementById('entryDetail').value = '';
+            document.getElementById('entryResult').value = '';
+            document.getElementById('entryRecorder').value = '';
+
+            // คืนค่าปุ่มกลับมาเหมือนเดิม
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
+
+            // แสดงข้อความสำเร็จ
+            const msg = document.getElementById('successMsg');
+            msg.classList.remove('hidden');
+            setTimeout(() => { msg.classList.add('hidden'); }, 3000);
+        }
+
+        // ฟังก์ชันดึงข้อมูลจาก Google Sheets
+        async function loadDataFromGoogleSheet() {
+            if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") return;
+            
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-blue-600 font-semibold">⏳ กำลังดาวน์โหลดข้อมูลจากฐานข้อมูล...</td></tr>`;
+            
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                const data = await response.json();
+                
+                if (data && Array.isArray(data)) {
+                    records = data; // นำข้อมูลจากชีตมาแทนที่ข้อมูลเดิม
+                    localStorage.setItem('whiteRoomRecords', JSON.stringify(records));
+                }
+            } catch (error) {
+                console.error("โหลดข้อมูลจาก Google Sheets ไม่สำเร็จ ใช้ข้อมูลในเครื่องแทน", error);
+            }
+        }
+
+        // ฟังก์ชันสร้างตารางพรีวิวรายงาน
+        function generatePreview() {
+            const fTerm = document.getElementById('filterTerm').value;
+            const fClass = document.getElementById('filterClass').value;
+            const fRoom = document.getElementById('filterRoom').value;
+            const fMonth = document.getElementById('filterMonth').value;
+            const fDept = document.getElementById('filterDept').value;
+
+            // อัปเดตหัวข้อรายงาน
+            document.getElementById('r-dept').innerText = fDept || '...';
+            document.getElementById('r-term').innerText = fTerm || '...';
+            document.getElementById('r-month').innerText = fMonth || '...';
+            document.getElementById('r-class').innerText = fClass || '...';
+            document.getElementById('r-room').innerText = fRoom || '...';
+
+            // กรองข้อมูล
+            let filtered = records.filter(r => r.dept === fDept); // บังคับกรองฝ่ายเสมอ
+            if (fTerm) filtered = filtered.filter(r => r.term === fTerm);
+            if (fClass) filtered = filtered.filter(r => r.classLvl === fClass);
+            if (fRoom) filtered = filtered.filter(r => r.room === fRoom);
+            if (fMonth) filtered = filtered.filter(r => r.month === fMonth);
+
+            const tbody = document.getElementById('reportTableBody');
+            tbody.innerHTML = ''; // ล้างของเก่า
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">ไม่พบข้อมูลการปฏิบัติงานของฝ่ายนี้ ในเงื่อนไขที่เลือก</td></tr>`;
+                return;
+            }
+
+            // เรียงตามวันที่ (พื้นฐาน)
+            filtered.sort((a, b) => a.id - b.id);
+
+            // สร้างแถวตาราง
+            filtered.forEach((r, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="text-center">${index + 1}</td>
+                    <td class="text-center">${r.date}</td>
+                    <td>${r.activity}</td>
+                    <td class="text-sm">${r.detail.replace(/\n/g, '<br>')}</td>
+                    <td class="text-sm">${r.result.replace(/\n/g, '<br>')}</td>
+                    <td class="text-center text-sm">${r.recorder}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ฟังก์ชันอัปเดตชื่อคนเซ็น
+        function updateSignatures() {
+            const lName = document.getElementById('printLeaderName').value;
+            const tName = document.getElementById('printTeacherName').value;
+            
+            document.getElementById('sigLeaderName').innerText = lName ? lName : '.................................';
+            document.getElementById('sigTeacherName').innerText = tName ? tName : '.................................';
+        }
+
+        // ฟังก์ชันส่งออกเป็น PDF
+        function exportToPDF() {
+            // เช็คก่อนว่ามีข้อมูลในตารางไหม
+            const tbody = document.getElementById('reportTableBody');
+            if (tbody.innerHTML.includes('ไม่พบข้อมูล')) {
+                alert('ไม่มีข้อมูลสำหรับสร้างรายงาน กรุณาเลือกเงื่อนไขใหม่');
+                return;
+            }
+
+            const element = document.getElementById('pdf-report-container');
+            
+            const fDept = document.getElementById('filterDept').value;
+            const fMonth = document.getElementById('filterMonth').value || 'ทั้งหมด';
+            const fClass = document.getElementById('filterClass').value || '-';
+            const fRoom = document.getElementById('filterRoom').value || '-';
+            const fileName = `รายงาน_${fDept}_เดือน_${fMonth}_ม${fClass.replace('มัธยมศึกษาปีที่ ','')}-${fRoom}.pdf`;
+
+            const opt = {
+                margin:       0,
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+    </script>
+</body>
+</html>
