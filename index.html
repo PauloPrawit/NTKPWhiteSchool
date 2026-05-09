@@ -98,7 +98,7 @@
             <form id="entryForm" onsubmit="saveRecord(event)">
                 <!-- ส่วนที่ 1: ข้อมูลห้องเรียน -->
                 <h3 class="text-lg font-semibold text-blue-700 mb-4 bg-blue-50 p-2 rounded">1. ข้อมูลทั่วไป</h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">ระดับชั้น <span class="text-red-500">*</span></label>
                         <select id="entryClass" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
@@ -123,8 +123,30 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">ภาคเรียน/ปีการศึกษา <span class="text-red-500">*</span></label>
-                        <input type="text" id="entryTerm" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เช่น 1/2569">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ภาคเรียน <span class="text-red-500">*</span></label>
+                        <select id="entryTerm" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">เลือกภาคเรียน...</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">ปีการศึกษา <span class="text-red-500">*</span></label>
+                        <select id="entryYear" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">เลือกปีการศึกษา...</option>
+                            <option value="2568">2568</option>
+                            <option value="2569">2569</option>
+                            <option value="2570">2570</option>
+                            <option value="2571">2571</option>
+                            <option value="2572">2572</option>
+                            <option value="2573">2573</option>
+                            <option value="2574">2574</option>
+                            <option value="2575">2575</option>
+                            <option value="2576">2576</option>
+                            <option value="2577">2577</option>
+                            <option value="2578">2578</option>
+                            <option value="2579">2579</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">ประจำเดือน <span class="text-red-500">*</span></label>
@@ -207,10 +229,32 @@
             <!-- แผงควบคุมการออกรายงาน (ไม่ปรากฏใน PDF) -->
             <div class="bg-white rounded-xl shadow-md p-6 no-print">
                 <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">ตั้งค่าการพิมพ์รายงานสรุปประจำเดือน</h2>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">ภาคเรียน/ปีการศึกษา</label>
-                        <input type="text" id="filterTerm" class="w-full p-2 border border-gray-300 rounded bg-gray-50" placeholder="เช่น 1/2569" onkeyup="generatePreview()" onchange="generatePreview()">
+                        <label class="block text-sm text-gray-600 mb-1">ภาคเรียน</label>
+                        <select id="filterTerm" class="w-full p-2 border border-gray-300 rounded bg-gray-50" onchange="generatePreview()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 mb-1">ปีการศึกษา</label>
+                        <select id="filterYear" class="w-full p-2 border border-gray-300 rounded bg-gray-50" onchange="generatePreview()">
+                            <option value="">ทั้งหมด</option>
+                            <option value="2568">2568</option>
+                            <option value="2569">2569</option>
+                            <option value="2570">2570</option>
+                            <option value="2571">2571</option>
+                            <option value="2572">2572</option>
+                            <option value="2573">2573</option>
+                            <option value="2574">2574</option>
+                            <option value="2575">2575</option>
+                            <option value="2576">2576</option>
+                            <option value="2577">2577</option>
+                            <option value="2578">2578</option>
+                            <option value="2579">2579</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-600 mb-1">เลือกระดับชั้น</label>
@@ -276,7 +320,16 @@
                 </div>
 
                 <div class="flex justify-between items-center">
-                    <p class="text-sm text-gray-500">* ข้อมูลจะถูกดึงจากที่คุณบันทึกไว้ในแท็บแรก</p>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="refreshData()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            โหลดข้อมูลใหม่
+                        </button>
+                        <p class="text-xs text-gray-500 hidden md:block">* หากข้อมูลไม่ขึ้น ลองกดโหลดข้อมูลใหม่</p>
+                    </div>
+                    
                     <button onclick="exportToPDF()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-md flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -373,7 +426,7 @@
         // ==========================================
         // URL ของ Google Apps Script (นำ URL จากการ Deploy มาวางที่นี่)
         // ==========================================
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxfeleErg94uFjXaSN_eU-Pw_Z7zoflmqzEIgCaqyqfzB1s072U9G3aukXNKlBAM1z8/exec";
+        const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
 
         // อาเรย์สำหรับเก็บข้อมูล
         let records = JSON.parse(localStorage.getItem('whiteRoomRecords')) || [];
@@ -393,6 +446,12 @@
                 generatePreview(); 
             }
         }
+        
+        // ปุ่มบังคับโหลดข้อมูลใหม่
+        async function refreshData() {
+            await loadDataFromGoogleSheet();
+            generatePreview();
+        }
 
         // ฟังก์ชันบันทึกข้อมูลแบบฟอร์ม
         async function saveRecord(event) {
@@ -410,7 +469,7 @@
                 id: Date.now(),
                 classLvl: document.getElementById('entryClass').value,
                 room: document.getElementById('entryRoom').value,
-                term: document.getElementById('entryTerm').value,
+                term: document.getElementById('entryTerm').value + '/' + document.getElementById('entryYear').value,
                 month: document.getElementById('entryMonth').value,
                 dept: document.getElementById('entryDept').value,
                 date: document.getElementById('entryDate').value,
@@ -458,29 +517,43 @@
             setTimeout(() => { msg.classList.add('hidden'); }, 3000);
         }
 
-        // ฟังก์ชันดึงข้อมูลจาก Google Sheets
+        // ฟังก์ชันดึงข้อมูลจาก Google Sheets แบบใหม่ (มีการตรวจจับ Error ที่แม่นยำขึ้น)
         async function loadDataFromGoogleSheet() {
-            if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") return;
+            if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+                console.log("ใช้งานแบบ Offline (ไม่มี URL Google Sheets)");
+                return;
+            }
             
             const tbody = document.getElementById('reportTableBody');
             tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-blue-600 font-semibold">⏳ กำลังดาวน์โหลดข้อมูลจากฐานข้อมูล...</td></tr>`;
             
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL);
-                const data = await response.json();
+                
+                // ถ้าระบบส่งกลับมาเป็นหน้า HTML (มักเกิดจากลืมตั้งค่าเป็น "ทุกคน" (Anyone) ใน Apps Script)
+                const textData = await response.text();
+                if (textData.includes("<html") || textData.includes("<!DOCTYPE")) {
+                    throw new Error("สิทธิ์การเข้าถึงฐานข้อมูลถูกปฏิเสธ!\nกรุณากลับไปที่ Apps Script และ Deploy ใหม่ โดยปรับ 'ผู้ที่มีสิทธิ์เข้าถึง' ให้เป็น 'ทุกคน' (Anyone)");
+                }
+
+                // แปลงเป็น JSON
+                const data = JSON.parse(textData);
                 
                 if (data && Array.isArray(data)) {
                     records = data; // นำข้อมูลจากชีตมาแทนที่ข้อมูลเดิม
                     localStorage.setItem('whiteRoomRecords', JSON.stringify(records));
                 }
             } catch (error) {
-                console.error("โหลดข้อมูลจาก Google Sheets ไม่สำเร็จ ใช้ข้อมูลในเครื่องแทน", error);
+                console.error("โหลดข้อมูลไม่สำเร็จ:", error);
+                alert("เกิดปัญหาการเชื่อมต่อฐานข้อมูล:\n" + error.message + "\n\n(ระบบจะใช้ข้อมูลที่มีค้างอยู่ในเครื่องแทนชั่วคราว)");
             }
         }
 
         // ฟังก์ชันสร้างตารางพรีวิวรายงาน
         function generatePreview() {
+            // ใช้ .trim() เพื่อตัดช่องว่าง (Spacebar) ที่อาจเผลอพิมพ์เกินมา
             const fTerm = document.getElementById('filterTerm').value;
+            const fYear = document.getElementById('filterYear').value;
             const fClass = document.getElementById('filterClass').value;
             const fRoom = document.getElementById('filterRoom').value;
             const fMonth = document.getElementById('filterMonth').value;
@@ -488,14 +561,22 @@
 
             // อัปเดตหัวข้อรายงาน
             document.getElementById('r-dept').innerText = fDept || '...';
-            document.getElementById('r-term').innerText = fTerm || '...';
+            
+            let displayTerm = '...';
+            if (fTerm && fYear) displayTerm = fTerm + '/' + fYear;
+            else if (fTerm) displayTerm = fTerm + '/...';
+            else if (fYear) displayTerm = '.../' + fYear;
+            document.getElementById('r-term').innerText = displayTerm;
+
             document.getElementById('r-month').innerText = fMonth || '...';
             document.getElementById('r-class').innerText = fClass || '...';
             document.getElementById('r-room').innerText = fRoom || '...';
 
             // กรองข้อมูล
             let filtered = records.filter(r => r.dept === fDept); // บังคับกรองฝ่ายเสมอ
-            if (fTerm) filtered = filtered.filter(r => r.term === fTerm);
+            
+            if (fTerm) filtered = filtered.filter(r => r.term && r.term.startsWith(fTerm + '/'));
+            if (fYear) filtered = filtered.filter(r => r.term && r.term.endsWith('/' + fYear));
             if (fClass) filtered = filtered.filter(r => r.classLvl === fClass);
             if (fRoom) filtered = filtered.filter(r => r.room === fRoom);
             if (fMonth) filtered = filtered.filter(r => r.month === fMonth);
@@ -504,7 +585,7 @@
             tbody.innerHTML = ''; // ล้างของเก่า
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">ไม่พบข้อมูลการปฏิบัติงานของฝ่ายนี้ ในเงื่อนไขที่เลือก</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">ไม่พบข้อมูลการปฏิบัติงาน ในเงื่อนไขที่เลือก<br><span class="text-sm">(ลองปรับเงื่อนไข หรือกด 'โหลดข้อมูลใหม่')</span></td></tr>`;
                 return;
             }
 
